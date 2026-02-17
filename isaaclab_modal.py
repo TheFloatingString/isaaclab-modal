@@ -371,7 +371,7 @@ except Exception as err:
     print('  omni.client:', err)
 
 print('\\n✓ Installation verified! AppLauncher works correctly.')
-print('  Note: Full simulation requires running IsaacSim (see train_ant function)')
+print('  Note: Full simulation requires running IsaacSim (see train_robot function)')
 "
     """
 
@@ -401,7 +401,7 @@ print('  Note: Full simulation requires running IsaacSim (see train_ant function
     gpu="T4",
     timeout=3600,
 )
-def train_ant(
+def train_robot(
     task: str = "Isaac-Velocity-Rough-Anymal-D-v0",
     num_steps: int = None,
     total_timesteps: int = None,
@@ -568,7 +568,7 @@ def main():
     print("Available commands:")
     print("  - modal run isaaclab_modal.py::main (run test)")
     print("  - modal run isaaclab_modal.py::check_installation (check setup)")
-    print("  - modal run isaaclab_modal.py::train_ant (train ant)")
+    print("  - modal run isaaclab_modal.py::train_robot (train robot)")
     print()
 
     # Check installation first
