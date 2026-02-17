@@ -3,7 +3,6 @@
 import os
 import subprocess
 import modal
-from modal.mount import Mount
 
 # Configuration
 ISAACSIM_VERSION = "4.5.0"

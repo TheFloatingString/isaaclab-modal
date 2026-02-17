@@ -1,7 +1,6 @@
 """Custom training script with wandb logging using Stable-Baselines3 SAC."""
 
 import argparse
-import sys
 import os
 from datetime import datetime
 
@@ -69,9 +68,6 @@ simulation_app = app_launcher.app
 """Rest everything follows."""
 
 import gymnasium as gym
-import torch
-import numpy as np
-from datetime import datetime
 
 from isaaclab.envs import (
     DirectMARLEnv,
