@@ -29,13 +29,20 @@ This project sets up IsaacLab and IsaacSim on Modal's serverless GPU infrastruct
    modal run isaaclab_modal.py::check_installation
    ```
 
-4. **Train an ant (example)**:
+4. **Train a robot with wandb logging**:
    ```bash
-   # Basic training
-   modal run isaaclab_modal.py::train_ant
+   # Train Anymal-D on rough terrain with wandb
+   modal run isaaclab_modal.py::train_ant \
+     --task Isaac-Velocity-Rough-Anymal-D-v0 \
+     --num-steps 1000 \
+     --use-wandb \
+     --wandb-project isaaclab-training \
+     --wandb-key your_wandb_key_here
    
-   # With wandb logging
-   modal run isaaclab_modal.py::train_ant --wandb-project my-project --wandb-entity my-username
+   # Or train the ant (original task)
+   modal run isaaclab_modal.py::train_ant \
+     --task Isaac-Ant-v0 \
+     --num-steps 1000
    ```
 
 ## Available Commands
@@ -43,7 +50,7 @@ This project sets up IsaacLab and IsaacSim on Modal's serverless GPU infrastruct
 - `modal run isaaclab_modal.py::main` - Run the test suite and verify installation
 - `modal run isaaclab_modal.py::check_installation` - Check if everything is installed correctly
 - `modal run isaaclab_modal.py::run_isaaclab_test` - Run a basic IsaacLab test
-- `modal run isaaclab_modal.py::train_ant` - Train an ant using RL
+- `modal run isaaclab_modal.py::train_ant` - Train a robot using RL with wandb support (default: Anymal-D)
 
 ## Setup Details
 
@@ -59,10 +66,11 @@ The Modal image (`isaaclab_modal.py`) performs the following steps:
 
 ```
 .
-├── isaaclab_modal.py   # Main Modal configuration and setup
-├── pyproject.toml      # Project dependencies
-├── README.md           # This file
-└── .venv/              # Virtual environment
+├── isaaclab_modal.py    # Main Modal configuration and setup
+├── train_with_wandb.py  # Custom training script with wandb logging
+├── pyproject.toml       # Project dependencies
+├── README.md            # This file
+└── .venv/               # Virtual environment
 ```
 
 ## Environment Variables
@@ -77,22 +85,34 @@ The following environment variables are set automatically:
 
 ## Logging with Weights & Biases
 
-The setup includes `wandb` for experiment tracking. To use it:
+The setup includes a **custom training script** (`train_with_wandb.py`) with built-in wandb support.
 
-1. **Set up your wandb API key** (one-time):
-   ```bash
-   modal secret create wandb-api-key WANDB_API_KEY=your_api_key_here
-   ```
+### Features:
+- ✅ Real-time logging of rewards, episode length, and losses
+- ✅ Automatic hyperparameter tracking
+- ✅ Model checkpoint saving to wandb
+- ✅ Support for multiple robots (Anymal-D, Ant, etc.)
+
+### Usage:
+
+1. **Get your wandb API key** from https://wandb.ai/authorize
 
 2. **Run training with wandb**:
    ```bash
    modal run isaaclab_modal.py::train_ant \
-     --wandb-project isaaclab-experiments \
-     --wandb-entity your-username \
-     --num-steps 10000
+     --task Isaac-Velocity-Rough-Anymal-D-v0 \
+     --num-steps 1000 \
+     --use-wandb \
+     --wandb-project isaaclab-training \
+     --wandb-key your_wandb_key_here
    ```
 
 3. **View results**: Check your wandb dashboard at https://wandb.ai
+
+### Available Tasks:
+- `Isaac-Velocity-Rough-Anymal-D-v0` - Anymal-D quadruped on rough terrain
+- `Isaac-Ant-v0` - Classic ant locomotion
+- See [IsaacLab tasks](https://isaac-sim.github.io/IsaacLab/main/source/overview/environments.html) for more
 
 ## Troubleshooting
 

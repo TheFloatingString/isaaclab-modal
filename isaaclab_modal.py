@@ -3,6 +3,7 @@
 import os
 import subprocess
 import modal
+from modal.mount import Mount
 
 # Configuration
 ISAACSIM_VERSION = "4.5.0"
@@ -275,8 +276,11 @@ image = (
         # Logging and experiment tracking
         "wandb",
         "tensorboard",
+        # RL libraries
+        "stable-baselines3",
     )
     .run_function(setup_image, gpu="T4", timeout=3600)  # 1 hour timeout for build
+    .add_local_file("train_with_wandb.py", remote_path="/root/train_with_wandb.py")
 )
 
 # Create Modal app
@@ -400,33 +404,39 @@ print('  Note: Full simulation requires running IsaacSim (see train_ant function
     timeout=3600,
 )
 def train_ant(
-    wandb_project: str = "isaaclab-ant",
-    wandb_entity: str = None,
+    task: str = "Isaac-Velocity-Rough-Anymal-D-v0",
     num_steps: int = 1000,
+    use_wandb: bool = True,
+    wandb_project: str = "isaaclab-training",
+    wandb_entity: str = None,
+    wandb_run_name: str = None,
     wandb_key: str = None,
 ):
-    """Train an ant using RL with wandb logging.
+    """Train a robot using RL with wandb logging.
 
     Args:
+        task: Task name (default: Isaac-Velocity-Rough-Anymal-D-v0)
+        num_steps: Number of training iterations
+        use_wandb: Enable wandb logging
         wandb_project: Wandb project name
         wandb_entity: Wandb entity/username (optional)
-        num_steps: Number of training steps
-        wandb_key: Wandb API key (optional - can also use WANDB_API_KEY env var)
+        wandb_run_name: Wandb run name (optional)
+        wandb_key: Wandb API key (optional)
     """
     import subprocess
     import os
 
     isaaclab_path = "/root/IsaacLab"
     isaacsim_path = "/root/isaacsim"
-    train_script = os.path.join(
-        isaaclab_path, "scripts/reinforcement_learning/rsl_rl/train.py"
-    )
 
-    print("Training ant...")
-    print(f"Wandb project: {wandb_project}")
-    if wandb_entity:
-        print(f"Wandb entity: {wandb_entity}")
+    # Use custom training script with wandb support
+    train_script = "/root/train_with_wandb.py"
+
+    print(f"Training {task}...")
     print(f"Training steps: {num_steps}")
+    print(f"Wandb enabled: {use_wandb}")
+    if use_wandb:
+        print(f"Wandb project: {wandb_project}")
 
     # Set up environment
     env = os.environ.copy()
@@ -435,20 +445,24 @@ def train_ant(
         print("Using provided wandb API key")
     elif "WANDB_API_KEY" in env:
         print("Using WANDB_API_KEY from environment")
-    else:
+    elif use_wandb:
         print("Warning: No wandb API key found - logging may fail")
 
     # Use the conda setup script to properly configure environment
     setup_conda_script = os.path.join(isaacsim_path, "setup_conda_env.sh")
 
-    # Build training command with wandb logging
-    train_cmd = f"python {train_script} --task=Isaac-Ant-v0 --headless --max_iterations={num_steps}"
+    # Build training command
+    train_cmd = (
+        f"python {train_script} --task={task} --headless --max_iterations={num_steps}"
+    )
 
-    # Add wandb logging if configured
-    if wandb_project:
-        train_cmd += f" --logger=wandb --wandb_project={wandb_project}"
+    # Add wandb arguments if enabled
+    if use_wandb:
+        train_cmd += f" --use_wandb --wandb_project={wandb_project}"
         if wandb_entity:
             train_cmd += f" --wandb_entity={wandb_entity}"
+        if wandb_run_name:
+            train_cmd += f" --wandb_run_name={wandb_run_name}"
 
     # Build full command with proper environment setup
     cmd = f"""
